@@ -1,15 +1,11 @@
 # Load necessary libraries
 library(lme4)
 library(haven)
-364+111
+
 # Create the data frame
-364/475
-View(fracpol)
 MyNames <- data.frame(FirstName = c("minushalf", "minus2", "minus1", "log", "plushalf", "plus1", "plus2", "plus3"))
-fracpol <- read_sas("C:/Users/u0118563/OneDrive - KU Leuven/Projecten/Rare diseases/Data/fracpol2.sas7bdat", 
-                   NULL)
-names(fracpol)
-length(unique(fracpol$id))
+fracpol <- read_sas("fracpol2.sas7bdat")
+
 #recode the responses
 recode=function(x){
   ifelse(x=='Yes',1,0)
