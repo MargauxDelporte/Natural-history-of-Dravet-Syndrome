@@ -1,11 +1,17 @@
 library(haven)
 library(ggplot2)
 library(ggalluvial)
-setwd(dir = 'C:/Users/u0118563/OneDrive - KU Leuven/Projecten/Rare diseases/Data')
+
+#import the data
 want <- read_sas("want.sas7bdat", NULL)
+
+#drop the missing values
 want_nomiss=subset(want,want$Speech2!='')
+
+#select only the first four measurements
 want_sub=subset(want_nomiss,want_nomiss$count<5)
-want_sub$Speech=want_sub$Speech2
+
+#visualise the results
 ggplot(want_sub,
        aes(x = count, stratum = Speech, alluvium = id,
            fill = Speech, label = Speech)) +
