@@ -4,7 +4,7 @@ library(ggplot2)
 library(ggpubr)#ggarrange
 library(marginaleffects)
 library(dplyr)
-speech <- read_excel("C:/Users/u0118563/OneDrive - KU Leuven/Projecten/Rare diseases/Data/speech.xlsx")
+speech <- read_excel("C:/Users/speech.xlsx")
 
 #Create dummy variables
 speech$Male=ifelse(speech$sex=='M',1,0)
@@ -38,7 +38,6 @@ for(v in 2:nrow(speech)){
 
 
 ###fit transition model#####
-?polr
 fulldata=(speech[!is.na(speech$l1)&!is.na(speech$Speech2)&!is.na(speech$baseline_age)&!is.na(speech$Male)&!is.na(speech$Gene_other),])
 Markov=polr(as.factor(Speech2)~baseline_age+Male+Gene_other+Gene_PCDH19+time+l1+
               l1*baseline_age+l1*Male+l1*time,data=fulldata,
@@ -88,5 +87,3 @@ smooth_poor <- ggplot(subset(probs, probs$group == '1.Poor'),
 
 ggarrange(smooth_absent,smooth_poor, common.legend = TRUE, legend="bottom")
 
-
-library(xtable)
