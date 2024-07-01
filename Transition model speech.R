@@ -3,14 +3,18 @@ library(MASS) #polr
 library(ggplot2)
 library(ggpubr)#ggarrange
 library(marginaleffects)
+library(car) #ANOVA function
 library(dplyr)
-speech <- read_excel("C:/Users/speech.xlsx")
+
+#import the data
+speech <- read_excel("C:/Users/u0118563/OneDrive - KU Leuven/Projecten/Rare diseases/Data/speech.xlsx")
 
 #Create dummy variables
 speech$Male=ifelse(speech$sex=='M',1,0)
 speech$Gene_other=ifelse(is.na(speech$mutation),NA,ifelse(speech$mutation=='OTHER',1,0))
 speech$Gene_PCDH19=ifelse(is.na(speech$mutation),NA,ifelse(speech$mutation=='PCDH19',1,0))
 speech$Gene_SCN1A=ifelse(is.na(speech$mutation),NA,ifelse(speech$mutation=='SCN1A',1,0))
+
 
 
 #Discard unrealistic ages
@@ -40,30 +44,44 @@ for(v in 2:nrow(speech)){
 ###fit transition model#####
 fulldata=(speech[!is.na(speech$l1)&!is.na(speech$Speech2)&!is.na(speech$baseline_age)&!is.na(speech$Male)&!is.na(speech$Gene_other),])
 Markov=polr(as.factor(Speech2)~baseline_age+Male+Gene_other+Gene_PCDH19+time+l1+
-              l1*baseline_age+l1*Male+l1*time,data=fulldata,
-     Hess = TRUE, model = TRUE,
-     method = c("probit"))
+              l1*baseline_age+l1*Male+l1*time,
+            data=fulldata,
+            Hess = TRUE, model = TRUE,
+            method = c("probit"))
 
 summary(Markov)
+
+#conduct type III tests
+names(Markov$coefficients)
+#Gender
+linearHypothesis(Markov, hypothesis.matrix=c(0,1/3,rep(0,7),1/3,1/3,0,0))$`Pr(>Chisq)`[2]
+
+#Previous measurement
+linearHypothesis(Markov, hypothesis.matrix=c(rep(0,5),rep(1/8,8)))
+
+#Time effect absent speech
+linearHypothesis(Markov, hypothesis.matrix="time")
+Anova(Markov)
 
 #get predicted values
 Markov$fitted.values
 predicted=cbind(fulldata,Markov$fitted.values)
 
-#method with confidence intervals
+#####Create predicted probabilities with confidence intervals#####
+
+#create a new dataset
 nd=expand.grid(
   baseline_age=0.3,Male=c(0,1),Gene_other=0,Gene_PCDH19=0,time=seq(from=0,to=18,by=0.1),l1=c("0.Absent","1.Poor","2.Normal"))
 nd$sex=ifelse(nd$Male==0,'F','M')
+
+#Make the predictions
 probs <- marginaleffects::predictions(Markov, 
                                       newdata = nd,
-                                      type = "probs")
-
-#visualise predicted values
+                                      type = "probs",conf_level=0.95)
+#visualize predicted values
 probs$Category=paste(probs$l1,probs$sex)
 probs$age=probs$baseline_age+probs$time
-min(probs$conf.low)
-max(probs$conf.high)
-names(predicted)[14:16]=c('P_absent','P_poor','P_normal')
+
 smooth_absent=ggplot(subset(probs,probs$group=='0.Absent'), aes(x = age, y =estimate,colour= Category))+
   geom_smooth(method = "loess", level=0.95)+theme_bw()+ylab('Predicted probability')+ ylim(0, 1)+ xlim(0, 18)+ggtitle('Predicted Probability Absent Speech')
 smooth_absent <- ggplot(subset(probs, probs$group == '0.Absent'), 
@@ -86,4 +104,5 @@ smooth_poor <- ggplot(subset(probs, probs$group == '1.Poor'),
   ggtitle('Predicted Probability Poor Speech')
 
 ggarrange(smooth_absent,smooth_poor, common.legend = TRUE, legend="bottom")
+
 
