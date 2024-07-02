@@ -56,6 +56,10 @@ names(Markov$coefficients)
 #Gender
 linearHypothesis(Markov, hypothesis.matrix=c(0,1/3,rep(0,7),1/3,1/3,0,0))$`Pr(>Chisq)`[2]
 
+#Gene
+linearHypothesis(Markov, hypothesis.matrix=c(0,0,1/2,1/2,rep(0,9)))$`Pr(>Chisq)`[2]
+
+
 #Previous measurement
 linearHypothesis(Markov, hypothesis.matrix=c(rep(0,5),rep(1/8,8)))
 
